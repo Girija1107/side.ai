@@ -1,0 +1,174 @@
+/*
+# AI Assistive Technology for Visually Impaired — Database Schema
+
+## Overview
+Single-tenant app (no sign-in) that provides AI-powered accessibility assistance:
+object detection, text/currency recognition, voice interaction, GPS navigation
+with radius alerts, emergency assistance, and accessible educational content.
+All data is intentionally shared/public for the anon-key client, so policies
+use `TO anon, authenticated`.
+
+## New Tables
+1. `emergency_contacts` — trusted contacts reachable during emergencies
+   - id, name, phone, relationship, created_at
+2. `location_alerts` — saved GPS locations with a radius (meters) that trigger
+   guidance/alerts when the user enters the area
+   - id, label, latitude, longitude, radius_meters, alert_message, active, created_at
+3. `app_settings` — single-row app preferences (voice rate, pitch, language, etc.)
+   - id, voice_rate, voice_pitch, voice_uri, language, high_contrast, created_at, updated_at
+4. `detection_history` — log of detected objects/text/currency for review
+   - id, detection_type, content, confidence, created_at
+5. `educational_content` — accessible learning materials with audio-friendly text
+   - id, title, category, body, created_at
+
+## Security
+- RLS enabled on every table.
+- All tables allow anon + authenticated CRUD (intentionally public single-tenant app).
+
+## Important Notes
+1. No auth/sign-in — the frontend uses the anon key for its entire lifetime.
+2. `app_settings` is seeded with one default row.
+3. `educational_content` is seeded with sample lessons.
+*/
+
+-- Emergency contacts
+CREATE TABLE IF NOT EXISTS emergency_contacts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  phone text NOT NULL,
+  relationship text,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE emergency_contacts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_emergency_contacts" ON emergency_contacts;
+CREATE POLICY "anon_select_emergency_contacts" ON emergency_contacts FOR SELECT
+  TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_emergency_contacts" ON emergency_contacts;
+CREATE POLICY "anon_insert_emergency_contacts" ON emergency_contacts FOR INSERT
+  TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_emergency_contacts" ON emergency_contacts;
+CREATE POLICY "anon_update_emergency_contacts" ON emergency_contacts FOR UPDATE
+  TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_emergency_contacts" ON emergency_contacts;
+CREATE POLICY "anon_delete_emergency_contacts" ON emergency_contacts FOR DELETE
+  TO anon, authenticated USING (true);
+
+-- Location alerts (GPS radius)
+CREATE TABLE IF NOT EXISTS location_alerts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  label text NOT NULL,
+  latitude double precision NOT NULL,
+  longitude double precision NOT NULL,
+  radius_meters integer NOT NULL DEFAULT 10,
+  alert_message text,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE location_alerts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_location_alerts" ON location_alerts;
+CREATE POLICY "anon_select_location_alerts" ON location_alerts FOR SELECT
+  TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_location_alerts" ON location_alerts;
+CREATE POLICY "anon_insert_location_alerts" ON location_alerts FOR INSERT
+  TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_location_alerts" ON location_alerts;
+CREATE POLICY "anon_update_location_alerts" ON location_alerts FOR UPDATE
+  TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_location_alerts" ON location_alerts;
+CREATE POLICY "anon_delete_location_alerts" ON location_alerts FOR DELETE
+  TO anon, authenticated USING (true);
+
+-- App settings (single row)
+CREATE TABLE IF NOT EXISTS app_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  voice_rate real NOT NULL DEFAULT 1.0,
+  voice_pitch real NOT NULL DEFAULT 1.0,
+  voice_uri text,
+  language text NOT NULL DEFAULT 'en-US',
+  high_contrast boolean NOT NULL DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_app_settings" ON app_settings;
+CREATE POLICY "anon_select_app_settings" ON app_settings FOR SELECT
+  TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_app_settings" ON app_settings;
+CREATE POLICY "anon_insert_app_settings" ON app_settings FOR INSERT
+  TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_app_settings" ON app_settings;
+CREATE POLICY "anon_update_app_settings" ON app_settings FOR UPDATE
+  TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_app_settings" ON app_settings;
+CREATE POLICY "anon_delete_app_settings" ON app_settings FOR DELETE
+  TO anon, authenticated USING (true);
+
+-- Detection history
+CREATE TABLE IF NOT EXISTS detection_history (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  detection_type text NOT NULL,
+  content text NOT NULL,
+  confidence real,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE detection_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_detection_history" ON detection_history;
+CREATE POLICY "anon_select_detection_history" ON detection_history FOR SELECT
+  TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_detection_history" ON detection_history;
+CREATE POLICY "anon_insert_detection_history" ON detection_history FOR INSERT
+  TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_detection_history" ON detection_history;
+CREATE POLICY "anon_update_detection_history" ON detection_history FOR UPDATE
+  TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_detection_history" ON detection_history;
+CREATE POLICY "anon_delete_detection_history" ON detection_history FOR DELETE
+  TO anon, authenticated USING (true);
+
+-- Educational content
+CREATE TABLE IF NOT EXISTS educational_content (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  category text NOT NULL,
+  body text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE educational_content ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_educational_content" ON educational_content;
+CREATE POLICY "anon_select_educational_content" ON educational_content FOR SELECT
+  TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_educational_content" ON educational_content;
+CREATE POLICY "anon_insert_educational_content" ON educational_content FOR INSERT
+  TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_educational_content" ON educational_content;
+CREATE POLICY "anon_update_educational_content" ON educational_content FOR UPDATE
+  TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_educational_content" ON educational_content;
+CREATE POLICY "anon_delete_educational_content" ON educational_content FOR DELETE
+  TO anon, authenticated USING (true);
+
+-- Seed default settings row (if none exists)
+INSERT INTO app_settings (voice_rate, voice_pitch, language, high_contrast)
+SELECT 1.0, 1.0, 'en-US', false
+WHERE NOT EXISTS (SELECT 1 FROM app_settings);
+
+-- Seed sample educational content (if none exists)
+INSERT INTO educational_content (title, category, body)
+SELECT * FROM (VALUES
+  ('Getting Started with Voice Commands', 'Guide',
+   'You can control this app using your voice. Say "scan" to detect objects around you, "read" to recognize text, or "where am I" to hear your current location. Speak clearly and wait for the beep before giving a command.'),
+  ('Understanding Object Detection', 'Guide',
+   'The object detection feature uses your camera and an AI model to identify people, furniture, vehicles, animals, and many everyday objects. Detected objects are announced aloud so you can understand what is around you and avoid obstacles.'),
+  ('Using Location Alerts', 'Guide',
+   'Location alerts let you save important places like your home, a bus stop, or a doctor''s office. When you come within the radius you set, the app speaks a reminder. GPS accuracy is typically within a few meters outdoors, but may be less precise indoors.'),
+  ('Currency Recognition Tips', 'Guide',
+   'Hold the banknote flat under the camera with good lighting. The app analyzes the image and announces the denomination it recognizes. Always double-check important values independently.'),
+  ('Staying Safe Outdoors', 'Safety',
+   'When navigating outdoors, combine object detection with location alerts. The camera helps with immediate obstacles, while GPS alerts remind you of nearby landmarks. In an emergency, use the Emergency Assistance feature to quickly call a trusted contact.')
+) AS v(title, category, body)
+WHERE NOT EXISTS (SELECT 1 FROM educational_content);
+
+-- Indexes for frequently queried columns
+CREATE INDEX IF NOT EXISTS idx_detection_history_created_at ON detection_history (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_location_alerts_active ON location_alerts (active);
+CREATE INDEX IF NOT EXISTS idx_educational_content_category ON educational_content (category);
